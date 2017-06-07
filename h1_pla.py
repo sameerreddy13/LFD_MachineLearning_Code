@@ -1,60 +1,31 @@
 import numpy as np
 
-""" 
+'''
 In this problem f is a random line representing the decision boundary. 
 Points above this line are 1's and points below are -1's.
 We are using the PLA to learn this decision boundary from already classified points.
-"""
-rand_point = lambda: tuple(np.random.uniform(-1, 1, 2))
-def generate_f():
-	p1 = rand_point()
-	p2 = rand_point()
-	while p2 == p1:
-		p2 = rand_point()
-	(x1, y1) = p1
-	(x2, y2) = p2
-	slope = (y2 - y1) / (x2 - x1)
-	f = lambda x: ((x - x1) * slope) + y1 
-	return f
-
-def generate_data(f, N):
-	x = []
-	y = []
-	for i in xrange(N):
-		p_i = rand_point()
-		e = f(p_i[0])
-		if e <= p_i[1]:
-			y.append(1)
-		else:
-			y.append(-1)
-		x.append(p_i)
-	return np.array(x), np.array(y)
-
-def out_of_sample_err(correct, classified):
-	if not correct.shape == classified.shape:
-		raise ValueError
-	num_samples = correct.shape[0]
-	num_errors = np.count_nonzero(correct != classified)
-	return float(num_errors) / num_samples
+'''
 
 class PLA(object):
 	"""Implementation of Perceptron Learning Algorithim""" 
 	def __init__(self, d, x, y):
 		''' 
-		bias: bias/threshold 
-		d: dimension of data
-		x: input data matrix of d-dimensional points
-		y: correct classification for x
+		Inputs:
+			d: dimension of data
+			x: input data matrix of d-dimensional points
+			y: correct classification for x
 		'''
 		super(PLA, self).__init__()
 		if not x.shape[1] == d:
 			raise ValueError
+
 		self.N = x.shape[0]
 		self.d = d
 		self.y = y
+
 		# set x0 = 1 for each data point
 		self.x = np.insert(x, 0, 1, axis=1)
-		self.w = np.array([0 for i in xrange(d + 1)])
+		self.w = np.zeros((1, d + 1))
 
 	def sign(self, x):
 		if x == 0:
@@ -79,15 +50,18 @@ class PLA(object):
 
 	def run(self):
 		'''
-		Return: number of iterations till convergence and final weights
+		Returns: number of iterations till convergence and final weights
 		'''
 		i = 1
 		while not self.update():
 			i += 1
-		return i, self.w
+		return (i, self.w)
 
 	def reset(self):
-		self.w = np.array([0 for i in xrange(self.d + 1)])
+		'''
+		Reset algorithim by setting all weights to 0
+		'''
+		self.w = np.zeros((1, d + 1))
 
 	def classify(self, x):
 		'''
@@ -101,7 +75,39 @@ class PLA(object):
 		h = np.array([self.sign(self.w.dot(x[i])) for i in xrange(N)])
 		return h
 
+def rand_point():
+	return tuple(np.random.uniform(-1, 1, 2))
 
+def generate_f():
+	p1 = rand_point()
+	p2 = rand_point()
+	while p2 == p1:
+		p2 = rand_point()
+	(x1, y1) = p1
+	(x2, y2) = p2
+	slope = (y2 - y1) / (x2 - x1)
+	f = lambda x: ((x - x1) * slope) + y1 
+	return f
+
+def generate_data(f, N):
+	x = []
+	y = []
+	# generate dataset of size N
+	for i in xrange(N):
+		p_i = rand_point()
+		# find point on f corresponding to x value of p_i
+		e = f(p_i[0])
+		# classify accordingly if p_i above f or below f: cmp returns 1 if greater, 0 if equal, -1 if less
+		y.append(cmp(p_i[1], e))
+		x.append(p_i)
+	return (np.array(x), np.array(y))
+
+def calc_error_rate(correct, classified):
+	if not correct.shape == classified.shape:
+		raise ValueError
+	num_samples = correct.shape[0]
+	num_errors = np.count_nonzero(correct != classified)
+	return float(num_errors) / num_samples
 
 if __name__ == '__main__':
 	d = 2
@@ -119,6 +125,6 @@ if __name__ == '__main__':
 	for _ in xrange(100):
 		x, y = generate_data(f, 10000)
 		classified = pla.classify(x)
-		out_error += out_of_sample_err(y, classified)
-	print "average out of sample error rate:", out_error / 100
+		out_error += calc_error_rate(y, classified)
+	print "average out of sample error rate:", float(out_error) / 100
 	
