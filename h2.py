@@ -16,6 +16,11 @@ def clamp(x, minx, maxx):
     else:
         return x
 
+def boldprint(msg):
+	print BOLD, msg, END
+
+########################################################################################
+
 '''
 In this problem we use the following experiment:
 Flip a 1000 coins 10 times each. Take c1 = first coin, crand = randomly chosen coin, cmin = coin with least heads
@@ -40,7 +45,7 @@ def run_sim():
 
 # run code for first problem
 def coin_sim_problem():
-	print "{0}Coin Simulation:{1}".format(BOLD, END)
+	boldprint("Coin Simulation:")
 	v1 = v_rand = v_min = 0.0
 	num_sim = 1000
 	# simulate 100,000 times
@@ -58,16 +63,18 @@ def coin_sim_problem():
 	v_min = v_min / num_sim
 	print(v1, v_rand, v_min)
 
+########################################################################################
 
 '''
 In this problem f is a random line representing the decision boundary. 
 Points above this line are 1's and points below are -1's.
-We are using linear regression for classification, from a training data set we generate.
+We are using linear regression for classification on a training dataset of points randomly picked from
+D = [-1, 1] x [-1, 1].
 '''
 class LinearRegressionClassifier(object):
 	"""
 	Classifier using linear regression. 
-	Uses sign(w * x) where w are the learned weights and x is an input
+	Uses np.sign(w * x) where w are the learned weights and x is an input
 	for binary output of -1 or +1.
 	"""
 	def __init__(self, d, x, y):
@@ -87,29 +94,21 @@ class LinearRegressionClassifier(object):
 
 		# set x0 = 1 for each data point
 		self.x = np.insert(x, 0, 1, axis=1)
-		self.w = np.zeros((1, d + 1))
+		self.w = np.zeros(d + 1)
 		self.run()
-
-	def sign(self, x):
-		if x == 0:
-			return 0
-		elif x < 0:
-			return -1
-		return 1
 
 	def run(self):
 		'''
 		Solves and sets weights for linear regression on input data x.
 		'''
-		# pdb.set_trace()
-		pseudo_inv = np.linalg.pinv(self.x)
-		self.w = pseudo_inv.dot(self.y)
+		Xpseudo_inv = np.linalg.pinv(self.x)
+		self.w = Xpseudo_inv.dot(self.y)
 
 	def reset(self):
 		'''
 		Reset algorithim by setting all weights to 0
 		'''
-		self.w = np.zeros((1, d + 1))
+		self.w = np.zeros(d + 1)
 
 	def get_weights(self):
 		'''
@@ -127,13 +126,13 @@ class LinearRegressionClassifier(object):
 
 		N = x.shape[0]
 		x = np.insert(x, 0, 1, axis=1)
-		return np.array([self.sign(self.w.dot(x[i])) for i in xrange(N)])
+		return np.sign(x.dot(self.w))
 
 
 def rand_point():
 	return tuple(np.random.uniform(-1, 1, 2))
 
-def generate_f():
+def generate_randline():
 	p1 = rand_point()
 	p2 = rand_point()
 	while p2 == p1:
@@ -144,17 +143,17 @@ def generate_f():
 	f = lambda x: ((x - x1) * slope) + y1 
 	return f
 
-def generate_data(f, N):
+def problem2_data(f, N):
 	x = []
 	y = []
 	# generate dataset of size N
 	for i in xrange(N):
-		p_i = rand_point()
-		# find point on f corresponding to x value of p_i
-		e = f(p_i[0])
-		# classify accordingly if p_i above f or below f: cmp returns 1 if greater, 0 if equal, -1 if less
-		y.append(cmp(p_i[1], e))
-		x.append(p_i)
+		p = rand_point()
+		# find point on f corresponding to x value of p
+		boundary = f(p[0])
+		# classify accordingly if p above f or below f: cmp returns 1 if greater, 0 if equal, -1 if less
+		y.append(cmp(p[1], boundary))
+		x.append(p)
 	return (np.array(x), np.array(y))
 
 def calc_error_rate(correct, classified):
@@ -164,21 +163,20 @@ def calc_error_rate(correct, classified):
 	num_errors = np.count_nonzero(correct != classified)
 	return float(num_errors) / num_samples
 
-# run code for second problem/first linear regression problem
+# Run code for second problem/first linear regression problem
 def lin_reg1():
-	print "{0}Lin Reg 1:{1}".format(BOLD, END)
+	boldprint("Lin Reg 1:")
 	d = 2
 	N = 100
-	total = 0
 	error_rate = 0.0
-	num_sim = 100
+	num_sim = 1000
 	for _ in xrange(num_sim):
-		f = generate_f()
-		x, y = generate_data(f, N)
+		f = generate_randline()
+		x, y = problem2_data(f, N)
 		lrc = LinearRegressionClassifier(d, x, y)
 		classified = lrc.classify(x)
 		error_rate += calc_error_rate(y, classified)
-	print "Average in sample error:", error_rate / num_sim
+	print "Average in sample error rate:", error_rate / num_sim
 
 	'''
 	Plot f and the line learned through linear regression
@@ -186,8 +184,8 @@ def lin_reg1():
 	Thus our function g that is learned is also a binary classifier. 
 	We solve for x2 to find an equation based on single x values so we can plot the line. 
 	'''  
-	f = generate_f()
-	x, y = generate_data(f, N)
+	f = generate_randline()
+	x, y = problem2_data(f, N)
 	lrc_out = LinearRegressionClassifier(d, x, y)
 
 	(w0, w1, w2) = lrc_out.get_weights()
@@ -196,8 +194,8 @@ def lin_reg1():
 	g = lambda x: (w0 + w1 * x) / -w2
 	diff = lambda x: abs(clamp(f(x), -1, 1) - clamp(g(x), -1, 1))
 	diff_area = integrate.quad(diff, -1, 1)[0] / 4.0
-	print "Ratio of yellow area to graph area (this is the out of sample error rate):", diff_area
 
+	print "Ratio of yellow area to graph area (this is the out of sample error rate):", round(diff_area, 3)
 	x_points = np.linspace(-1, 1, 100)
 	plt.xlim(-1, 1)
 	plt.ylim(-1, 1)
@@ -206,11 +204,105 @@ def lin_reg1():
 	plt.legend()
 	diff_poly = plt.fill_between(x_points, f(x_points), g(x_points), color='yellow', alpha = 0.4)
 	plt.show()
-	
-	
 
+########################################################################################
+
+'''
+In this problem we again apply Linear Regression for classification. 
+However, now the target function is f(x1, x2) = np.sign(x1^2 + x2^2 - 0.6).
+The training dataset consists of points randomly picked from D = [-1, 1] x [-1, 1].
+We also generate simulated noise by flipping the np.sign of the output for a random 10% of the training data.
+
+We first carry out linear regression without transformation, with feature vector (1, x1, x2) as earlier.
+Then we carry out linear regression on transformed on feature vector (1, x1, x2, x1*x2, x1^2, x2^2)
+'''
+
+def transform(x):
+	# x is a np array of 2 dimensional elements
+	transform_f = lambda y: [y[0], y[1], y[0] * y[1], pow(y[0], 2), pow(y[1], 2)]
+	return np.array([transform_f(x_i) for x_i in x])
+
+def problem3_data(f, N):
+	x = []
+	y = []
+	# generate dataset of size N
+	for i in xrange(N):
+		p = rand_point()
+		c = f(p[0], p[1])
+		y.append(c)
+		x.append(p)
+
+	# add noise
+	random_indices = random.sample(xrange(N), N / 10)
+	for i in random_indices:
+		y[i] = y[i] * -1
+
+	return (np.array(x), np.array(y))
+
+# Run code for third problem/second lin regression problem
+def lin_reg2():
+	boldprint("Lin Reg 2:")
+	f = lambda x1, x2: np.sign(pow(x1, 2) + pow(x2, 2) - 0.6)
+	N = 1000
+	num_sim = 100
+
+	# without transform
+	d1 = 2
+	error_rate = 0.0
+	for _ in xrange(num_sim):
+		x, y = problem3_data(f, N)
+		lrc = LinearRegressionClassifier(d1, x, y)
+		classified = lrc.classify(x)
+		error_rate += calc_error_rate(y, classified)
+	print "Average in sample error rate on unchanged data:", error_rate / num_sim
+
+	# with transform
+	d2 = 5
+	error_rate = 0.0
+	for _ in xrange(num_sim):
+		x, y = problem3_data(f, N)
+		xt = transform(x)
+		lrc = LinearRegressionClassifier(d2, xt, y)
+		classified = lrc.classify(xt)
+		error_rate += calc_error_rate(y, classified)
+	print "Average in sample error rate on transformed data:", error_rate / num_sim
+	
+	error_rate = 0.0
+	for _ in xrange(num_sim): 
+		x, y = problem3_data(f, N)
+		xt = transform(x)
+		classified = lrc.classify(xt)
+		error_rate += calc_error_rate(y, classified)
+	print "Average out of sample error rate on transformed data:", error_rate / num_sim
+
+	'''
+	Plot the training data and then the decision boundary learned through linear regression
+	'''
+	x, y = problem3_data(f, 50)
+	print x, y
+	xt = transform(x)
+	lrc = LinearRegressionClassifier(d2, xt, y)
+	weights = lrc.get_weights()
+
+	positiveX = positiveY = []
+	negativeX = negativeY = []
+	plt.xlim(-1, 1)
+	plt.ylim(-1, 1)
+	for i, x_i in enumerate(x):
+		if y[i] == -1:
+			negativeX.append(x_i[0])
+			negativeY.append(x_i[1])
+		else:
+			positiveX.append(x_i[0])
+			positiveY.append(x_i[1])
+	plt.plot(positiveX, positiveY, 'bo', label = '1')
+	plt.plot(negativeX, negativeY, 'ro', label = '-1')
+	plt.legend()
+	plt.show()
+
+
+########################################################################################
 if __name__ == '__main__':
-	barrier = '-' * 20
-	coin_sim_problem()
-	print barrier
-	lin_reg1()
+	#coin_sim_problem()
+	#lin_reg1()
+	lin_reg2()

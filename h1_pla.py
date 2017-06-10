@@ -4,6 +4,7 @@ import numpy as np
 In this problem f is a random line representing the decision boundary. 
 Points above this line are 1's and points below are -1's.
 We are using the PLA to learn this decision boundary from already classified points.
+The training dataset consists of points randomly picked from D = [-1, 1] x [-1, 1].
 '''
 
 class PLA(object):
@@ -78,7 +79,7 @@ class PLA(object):
 def rand_point():
 	return tuple(np.random.uniform(-1, 1, 2))
 
-def generate_f():
+def generate_randline():
 	p1 = rand_point()
 	p2 = rand_point()
 	while p2 == p1:
@@ -94,12 +95,12 @@ def generate_data(f, N):
 	y = []
 	# generate dataset of size N
 	for i in xrange(N):
-		p_i = rand_point()
-		# find point on f corresponding to x value of p_i
-		e = f(p_i[0])
-		# classify accordingly if p_i above f or below f: cmp returns 1 if greater, 0 if equal, -1 if less
-		y.append(cmp(p_i[1], e))
-		x.append(p_i)
+		p = rand_point()
+		# find point on f corresponding to x value of p
+		boundary = f(p[0])
+		# classify accordingly if p above f or below f: cmp returns 1 if greater, 0 if equal, -1 if less
+		y.append(cmp(p[1], boundary))
+		x.append(p)
 	return (np.array(x), np.array(y))
 
 def calc_error_rate(correct, classified):
@@ -114,17 +115,17 @@ if __name__ == '__main__':
 	N = 100
 	total = 0
 	for _ in xrange(1000):
-		f = generate_f()
+		f = generate_randline()
 		x, y = generate_data(f, N)
 		pla = PLA(d, x, y)
 		_iter = pla.run()[0]	
 		total += _iter
-	print "average iterations till convergence:", float(total)/1000
+	print "Average iterations till convergence:", float(total)/1000
 
 	out_error = 0
 	for _ in xrange(100):
 		x, y = generate_data(f, 10000)
 		classified = pla.classify(x)
 		out_error += calc_error_rate(y, classified)
-	print "average out of sample error rate:", float(out_error) / 100
+	print "Average out of sample error rate:", float(out_error) / 100
 	
