@@ -2,6 +2,7 @@ import pdb # debugger
 import random 
 import numpy as np
 import scipy.integrate as integrate
+import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 
 BOLD = '\033[1m'
@@ -199,6 +200,8 @@ def lin_reg1():
 	x_points = np.linspace(-1, 1, 100)
 	plt.xlim(-1, 1)
 	plt.ylim(-1, 1)
+	plt.xlabel('x1')
+	plt.ylabel('x2')
 	plt.plot(x_points, f(x_points), label='f - the target function', color='red')
 	plt.plot(x_points, g(x_points), label='g - the learned function', color='blue')
 	plt.legend()
@@ -217,9 +220,9 @@ We first carry out linear regression without transformation, with feature vector
 Then we carry out linear regression on transformed on feature vector (1, x1, x2, x1*x2, x1^2, x2^2)
 '''
 
+transform_f = lambda y: [y[0], y[1], y[0] * y[1], pow(y[0], 2), pow(y[1], 2)]
 def transform(x):
 	# x is a np array of 2 dimensional elements
-	transform_f = lambda y: [y[0], y[1], y[0] * y[1], pow(y[0], 2), pow(y[1], 2)]
 	return np.array([transform_f(x_i) for x_i in x])
 
 def problem3_data(f, N):
@@ -276,18 +279,25 @@ def lin_reg2():
 	print "Average out of sample error rate on transformed data:", error_rate / num_sim
 
 	'''
-	Plot the training data and then the decision boundary learned through linear regression
+	Plot the training data and then the decision boundary learned through linear regression.
 	'''
-	x, y = problem3_data(f, 50)
-	print x, y
+	x, y = problem3_data(f, 5000)
 	xt = transform(x)
 	lrc = LinearRegressionClassifier(d2, xt, y)
 	weights = lrc.get_weights()
+	gX, gY = np.meshgrid(np.linspace(-1, 1, 100), np.linspace(-1, 1, 100))
+	(w0, w1, w2, w3, w4, w5) = weights
+	g = lambda x, y: np.sign(w0 + w1*x + w2*y + w3*x*y + w4*pow(x, 2) + w5*pow(y, 2))
 
-	positiveX = positiveY = []
-	negativeX = negativeY = []
+	positiveX = []
+	positiveY = []
+	negativeX = []
+	negativeY = []
+
 	plt.xlim(-1, 1)
 	plt.ylim(-1, 1)
+	plt.xlabel('x1')
+	plt.ylabel('x2')
 	for i, x_i in enumerate(x):
 		if y[i] == -1:
 			negativeX.append(x_i[0])
@@ -295,13 +305,15 @@ def lin_reg2():
 		else:
 			positiveX.append(x_i[0])
 			positiveY.append(x_i[1])
-	plt.plot(positiveX, positiveY, 'bo', label = '1')
-	plt.plot(negativeX, negativeY, 'ro', label = '-1')
+	plt.contour(gX, gY, g(gX, gY), colors = 'black', zorder=1)
+	plt.plot(positiveX, positiveY, 'bo', alpha=0.65, label='1', zorder=2)
+	plt.plot(negativeX, negativeY, 'ro', alpha=1.0, label='-1', zorder=3)
+	plt.title("Hypothesis function boundary on 5000 labeled points")
 	plt.legend()
 	plt.show()
 
-
 ########################################################################################
+
 if __name__ == '__main__':
 	#coin_sim_problem()
 	#lin_reg1()
