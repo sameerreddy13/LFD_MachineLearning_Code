@@ -165,7 +165,7 @@ def calc_error_rate(correct, classified):
 
 # Run code for second problem/first linear regression problem
 def lin_reg1():
-	boldprint("Lin Reg 1:")
+	boldprint("Lin Reg 1: Linear target function")
 	d = 2
 	N = 100
 	error_rate = 0.0
@@ -199,12 +199,13 @@ def lin_reg1():
 	x_points = np.linspace(-1, 1, 100)
 	plt.xlim(-1, 1)
 	plt.ylim(-1, 1)
+	plt.title("Target Function vs Hypothesis Function")
 	plt.xlabel('x1')
 	plt.ylabel('x2')
 	plt.plot(x_points, f(x_points), label='f - the target function', color='red')
 	plt.plot(x_points, g(x_points), label='g - the learned function', color='blue')
 	plt.legend()
-	diff_poly = plt.fill_between(x_points, f(x_points), g(x_points), color='yellow', alpha = 0.4)
+	plt.fill_between(x_points, f(x_points), g(x_points), color='yellow', alpha = 0.4)
 	plt.show()
 
 ########################################################################################
@@ -243,7 +244,7 @@ def problem3_data(f, N):
 
 # Run code for third problem/second lin regression problem
 def lin_reg2():
-	boldprint("Lin Reg 2:")
+	boldprint("Lin Reg 2: Nonlinear target function with 10% noise")
 	f = lambda x1, x2: np.sign(pow(x1, 2) + pow(x2, 2) - 0.6)
 	N = 1000
 	num_sim = 100
@@ -307,13 +308,13 @@ def lin_reg2():
 	plt.contour(gX, gY, g(gX, gY), colors = 'black', zorder=1)
 	plt.plot(positiveX, positiveY, 'bo', alpha=0.65, label='1', zorder=2)
 	plt.plot(negativeX, negativeY, 'ro', alpha=1.0, label='-1', zorder=3)
-	plt.title("Hypothesis function boundary on 5000 labeled points")
+	plt.title("Hypothesis function boundary over data")
 	plt.legend()
 	plt.show()
 
 ########################################################################################
 
 if __name__ == '__main__':
-	#coin_sim_problem()
-	#lin_reg1()
+	coin_sim_problem()
+	lin_reg1()
 	lin_reg2()
