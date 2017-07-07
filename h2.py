@@ -4,8 +4,7 @@ import numpy as np
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 
-BOLD = '\033[1m'
-END = '\033[0m'
+
 	
 # Restricts input to interval
 def clamp(x, minx, maxx):
@@ -17,9 +16,11 @@ def clamp(x, minx, maxx):
         return x
 
 def boldprint(msg):
+	BOLD = '\033[1m'
+	END = '\033[0m'
 	print BOLD, msg, END
 
-########################################################################################
+###################### Coin Problem ######################
 
 '''
 In this problem we use the following experiment:
@@ -63,7 +64,7 @@ def coin_sim_problem():
 	v_min = v_min / num_sim
 	print(v1, v_rand, v_min)
 
-########################################################################################
+###################### Lin Regression Code + Line Regression Problem 1 #################################
 
 '''
 In this problem f is a random line representing the decision boundary. 
@@ -73,11 +74,11 @@ D = [-1, 1] x [-1, 1].
 '''
 class LinearRegressionClassifier(object):
 	"""
-	Classifier using linear regression. 
-	Uses np.sign(w * x) where w are the learned weights and x is an input
+	Classifier using linear regression. Also has regularization using weight decay if set.
+	Uses sign(w * x) where w are the learned weights and x is an input
 	for binary output of -1 or +1.
 	"""
-	def __init__(self, d, x, y):
+	def __init__(self, d, x, y, reg=False, reg_param=None):
 		''' 
 		Inputs:
 			d: dimension of data
@@ -85,9 +86,8 @@ class LinearRegressionClassifier(object):
 			y: correct classification for x
 		'''
 		super(LinearRegressionClassifier, self).__init__()
-		if not x.shape[1] == d:
-			raise ValueError
-			
+		assert x.shape[1] == d
+
 		self.N = x.shape[0]
 		self.d = d
 		self.y = y
@@ -95,14 +95,17 @@ class LinearRegressionClassifier(object):
 		# set x0 = 1 for each data point
 		self.x = np.insert(x, 0, 1, axis=1)
 		self.w = np.zeros(d + 1)
-		self.run()
+		if reg:
+			assert reg_param is not None
+			self.run_with_regularization(reg_param)
+		else:
+			self.run()
 
 	def run(self):
 		'''
 		Solves and sets weights for linear regression on input data x.
 		'''
-		Xpseudo_inv = np.linalg.pinv(self.x)
-		self.w = Xpseudo_inv.dot(self.y)
+		self.w = np.linalg.pinv(self.x).dot(self.y)
 
 	def reset(self):
 		'''
@@ -121,12 +124,18 @@ class LinearRegressionClassifier(object):
 		Classifies input dataset x.
 		Returns: Classification of 1 or -1 for each point
 		'''
-		if not x.shape[1] == self.d:
-			raise ValueError
-
-		N = x.shape[0]
+		assert x.shape[1] == self.d
 		x = np.insert(x, 0, 1, axis=1)
 		return np.sign(x.dot(self.w))
+
+	def run_with_regularization(self, reg_param):
+		'''
+		Regularization with weight decay i.e an added term of 
+		(reg_param / N) * || self.w ||^2
+		'''
+		
+		m = np.linalg.inv(self.x.transpose().dot(self.x) + reg_param)
+		self.w = np.dot(m, self.x.transpose()).dot(self.y)
 
 
 def rand_point():
@@ -143,6 +152,15 @@ def generate_randline():
 	f = lambda x: ((x - x1) * slope) + y1 
 	return f
 
+def calc_error_rate(correct, classified):
+	'''
+	Calculate errors / total
+	'''
+	assert correct.shape == classified.shape
+	num_samples = correct.shape[0]
+	num_errors = np.count_nonzero(correct != classified)
+	return float(num_errors) / num_samples
+
 def problem2_data(f, N):
 	x = []
 	y = []
@@ -155,13 +173,6 @@ def problem2_data(f, N):
 		y.append(cmp(p[1], boundary))
 		x.append(p)
 	return (np.array(x), np.array(y))
-
-def calc_error_rate(correct, classified):
-	if not correct.shape == classified.shape:
-		raise ValueError
-	num_samples = correct.shape[0]
-	num_errors = np.count_nonzero(correct != classified)
-	return float(num_errors) / num_samples
 
 # Run code for second problem/first linear regression problem
 def lin_reg1():
@@ -208,7 +219,7 @@ def lin_reg1():
 	plt.fill_between(x_points, f(x_points), g(x_points), color='yellow', alpha = 0.4)
 	plt.show()
 
-########################################################################################
+###################### Lin Regression Problem 2 ######################
 
 '''
 In this problem we again apply Linear Regression for classification. 
@@ -220,8 +231,9 @@ We first carry out linear regression without transformation, with feature vector
 Then we carry out linear regression on transformed on feature vector (1, x1, x2, x1*x2, x1^2, x2^2)
 '''
 
-transform_f = lambda y: [y[0], y[1], y[0] * y[1], pow(y[0], 2), pow(y[1], 2)]
+
 def transform(x):
+	transform_f = lambda y: [y[0], y[1], y[0] * y[1], pow(y[0], 2), pow(y[1], 2)]
 	# x is a np array of 2 dimensional elements
 	return np.array([transform_f(x_i) for x_i in x])
 
